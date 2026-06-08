@@ -153,28 +153,37 @@
     .sort { padding: 0 12px; }
 
     .category-strip {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 10px;
-      overflow-x: auto;
-      padding: 2px 2px 18px;
-      margin-bottom: 10px;
-      scrollbar-width: none;
-    }
-
-    .category-strip::-webkit-scrollbar {
-      display: none;
+      margin-bottom: 20px;
     }
 
     .category-pill {
-      flex: 0 0 auto;
-      height: 40px;
-      padding: 0 14px;
+      position: relative;
+      min-height: 54px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 11px 14px 11px 18px;
       border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--panel-strong);
+      border-radius: var(--radius);
+      background: rgba(255, 250, 240, .82);
       color: var(--ink);
       cursor: pointer;
-      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+      overflow: hidden;
+      text-align: left;
+      box-shadow: 0 12px 28px rgba(24, 22, 18, .06);
+      transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+
+    .category-pill::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: linear-gradient(180deg, var(--pill-a), var(--pill-b));
     }
 
     .category-pill:hover { transform: translateY(-1px); }
@@ -182,6 +191,31 @@
       background: #171717;
       color: #fffaf0;
       border-color: #171717;
+      box-shadow: 0 18px 40px rgba(24, 22, 18, .18);
+    }
+
+    .category-label {
+      min-width: 0;
+      font-size: 14px;
+      line-height: 1.35;
+      font-weight: 680;
+      overflow-wrap: anywhere;
+    }
+
+    .category-count {
+      min-width: 42px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(23, 23, 23, .08);
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .category-pill.active .category-count {
+      color: rgba(255, 250, 240, .92);
+      background: rgba(255, 250, 240, .16);
     }
 
     .section {
@@ -338,6 +372,10 @@
     @media (max-width: 560px) {
       .hero-side { grid-template-columns: 1fr; }
       .grid { grid-template-columns: 1fr; }
+      .category-strip { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .category-pill { min-height: 48px; padding: 10px 10px 10px 14px; }
+      .category-label { font-size: 12px; }
+      .category-count { min-width: 34px; padding: 5px 7px; }
       .section-head { padding: 18px; }
       .repo-card { min-height: 0; }
     }
@@ -347,7 +385,7 @@
   <main class="shell">
     <section class="hero">
       <div class="hero-main">
-        <p class="eyebrow">BoscoCJ GitHub Stars · 2026-06-08 15:29 UTC</p>
+        <p class="eyebrow">BoscoCJ GitHub Stars · 2026-06-08 16:10 UTC</p>
         <h1>把收藏夹变成项目雷达</h1>
         <p class="hero-copy">按用途分类浏览你的 GitHub stars。每张卡片都有中文解释、技术标签、热度和更新时间，点击项目名即可跳转到 GitHub。</p>
       </div>
@@ -454,7 +492,8 @@
       categoryStrip.innerHTML = labels.map(label => {
         const active = state.category === label ? ' active' : '';
         const count = label === '全部' ? catalog.length : counts[label] || 0;
-        return `<button class="category-pill${active}" data-category="${escapeAttr(label)}">${escapeHtml(label)} · ${count}</button>`;
+        const colors = label === '全部' ? ['#171717', '#525252'] : categoryColors(label);
+        return `<button class="category-pill${active}" style="--pill-a: ${colors[0]}; --pill-b: ${colors[1]};" data-category="${escapeAttr(label)}"><span class="category-label">${escapeHtml(label)}</span><span class="category-count">${count}</span></button>`;
       }).join('');
       categoryStrip.querySelectorAll('button').forEach(button => {
         button.addEventListener('click', () => {
