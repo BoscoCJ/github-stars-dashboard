@@ -139,6 +139,17 @@
       box-shadow: 0 18px 42px rgba(24, 22, 18, .08);
     }
 
+    .search-panel {
+      display: grid;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .search-box {
+      position: relative;
+      min-width: 0;
+    }
+
     .search, .sort {
       width: 100%;
       height: 46px;
@@ -149,8 +160,63 @@
       outline: none;
     }
 
-    .search { padding: 0 16px; }
+    .search { padding: 0 46px 0 16px; }
     .sort { padding: 0 12px; }
+
+    .clear-search {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      width: 30px;
+      height: 30px;
+      display: none;
+      place-items: center;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(23, 23, 23, .08);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .clear-search.visible { display: grid; }
+    .clear-search:hover {
+      background: rgba(23, 23, 23, .14);
+      color: var(--ink);
+    }
+
+    .search-meta {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .quick-searches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .quick-chip {
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid rgba(23, 23, 23, .1);
+      border-radius: 999px;
+      background: rgba(255, 250, 240, .7);
+      color: #3a3732;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      transition: background .16s ease, border-color .16s ease, color .16s ease;
+    }
+
+    .quick-chip:hover, .quick-chip.active {
+      border-color: rgba(23, 23, 23, .28);
+      background: #171717;
+      color: #fffaf0;
+    }
 
     .category-strip {
       display: grid;
@@ -385,7 +451,7 @@
   <main class="shell">
     <section class="hero">
       <div class="hero-main">
-        <p class="eyebrow">BoscoCJ GitHub Stars · 2026-06-08 16:10 UTC</p>
+        <p class="eyebrow">BoscoCJ GitHub Stars · 2026-06-09 02:25 UTC</p>
         <h1>把收藏夹变成项目雷达</h1>
         <p class="hero-copy">按用途分类浏览你的 GitHub stars。每张卡片都有中文解释、技术标签、热度和更新时间，点击项目名即可跳转到 GitHub。</p>
       </div>
@@ -398,7 +464,23 @@
     </section>
 
     <section class="toolbar" aria-label="筛选工具">
-      <input class="search" id="search" type="search" placeholder="搜索项目、中文解释、技术栈、分类">
+      <div class="search-panel">
+        <div class="search-box">
+          <input class="search" id="search" type="search" placeholder="搜索项目、作者、中文解释、技术栈、分类" autocomplete="off">
+          <button class="clear-search" id="clearSearch" type="button" aria-label="清空搜索">×</button>
+        </div>
+        <div class="quick-searches" id="quickSearches" aria-label="常用搜索">
+          <button class="quick-chip" type="button" data-query="命理">命理</button>
+          <button class="quick-chip" type="button" data-query="八卦算命">八卦算命</button>
+          <button class="quick-chip" type="button" data-query="Agent">Agent</button>
+          <button class="quick-chip" type="button" data-query="RAG">RAG</button>
+          <button class="quick-chip" type="button" data-query="视频">视频</button>
+          <button class="quick-chip" type="button" data-query="剪辑">剪辑</button>
+          <button class="quick-chip" type="button" data-query="前端">前端</button>
+          <button class="quick-chip" type="button" data-query="安全">安全</button>
+        </div>
+        <div class="search-meta" id="searchMeta"></div>
+      </div>
       <select class="sort" id="sort" aria-label="排序">
         <option value="stars">按热度排序</option>
         <option value="recent">按收藏时间</option>
@@ -439,7 +521,22 @@
     const sectionsEl = document.getElementById('sections');
     const emptyEl = document.getElementById('empty');
     const searchEl = document.getElementById('search');
+    const clearSearchEl = document.getElementById('clearSearch');
+    const searchMetaEl = document.getElementById('searchMeta');
+    const quickSearchesEl = document.getElementById('quickSearches');
     const sortEl = document.getElementById('sort');
+
+    const searchAliases = {
+      '命理': ['命理', '算命', '八字', '八卦', '占卜', '占星', '星盘', '紫微', '风水', '易经', '玄学', '命运'],
+      '算命': ['命理', '算命', '八字', '八卦', '占卜', '占星', '星盘', '紫微', '风水', '易经', '玄学', '命运'],
+      '八卦': ['命理', '算命', '八字', '八卦', '占卜', '占星', '星盘', '紫微', '风水', '易经', '玄学', '命运'],
+      'agent': ['agent', 'agents', 'assistant', 'coding agent', 'ai agent', '智能体', '助手', '自动化'],
+      'rag': ['rag', 'retrieval', 'embedding', 'vector', '向量', '检索', '知识库', '召回'],
+      '视频': ['视频', 'video', 'audio', '音频', '剪辑', '字幕', 'transcribe', 'ffmpeg', '生成式创作'],
+      '剪辑': ['视频', 'video', '剪辑', '字幕', 'transcribe', 'ffmpeg', 'cut'],
+      '前端': ['前端', 'frontend', 'react', 'vue', 'css', 'ui', 'design', 'animation', '动画'],
+      '安全': ['安全', 'security', 'privacy', '隐私', 'reverse', '逆向']
+    };
 
     function formatNumber(value) {
       return new Intl.NumberFormat('en-US').format(value || 0);
@@ -454,10 +551,95 @@
       return palette[index % palette.length];
     }
 
+    function normalizeText(value) {
+      return String(value || '')
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[\\/_:|.,;()[\]{}<>#"'`~!?+=*-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function repoSearchFields(repo) {
+      if (!repo.__searchFields) {
+        const name = normalizeText([repo.full_name, repo.name, repo.owner_login].join(' '));
+        const note = normalizeText([repo.chinese_note, repo.description].join(' '));
+        const meta = normalizeText([
+          repo.primary_category,
+          ...(repo.secondary_categories || []),
+          repo.language,
+          repo.license,
+          repo.homepage,
+          ...(repo.topics || []),
+          ...(repo.matched_keywords || [])
+        ].join(' '));
+        repo.__searchFields = {
+          name,
+          note,
+          meta,
+          all: [name, note, meta].join(' ')
+        };
+      }
+      return repo.__searchFields;
+    }
+
+    function expandToken(token) {
+      const expanded = new Set([token]);
+      for (const [key, values] of Object.entries(searchAliases)) {
+        const normalizedKey = normalizeText(key);
+        if (token.includes(normalizedKey) || normalizedKey.includes(token) || values.some(value => token.includes(normalizeText(value)))) {
+          values.forEach(value => expanded.add(normalizeText(value)));
+        }
+      }
+      return [...expanded].filter(Boolean);
+    }
+
+    function queryGroups(query) {
+      const normalized = normalizeText(query);
+      if (!normalized) return [];
+      return normalized.split(' ').filter(Boolean).map(expandToken);
+    }
+
+    function scoreTerm(fields, term) {
+      let score = 0;
+      if (fields.name === term) score += 180;
+      if (fields.name.includes(term)) score += 90;
+      if (fields.meta.includes(term)) score += 48;
+      if (fields.note.includes(term)) score += 36;
+      if (fields.all.includes(term)) score += 12;
+      return score;
+    }
+
+    function repoSearchScore(repo) {
+      if (!state.query) return 0;
+      const fields = repoSearchFields(repo);
+      const groups = queryGroups(state.query);
+      if (!groups.length) return 0;
+      let score = 0;
+      const raw = normalizeText(state.query);
+      if (fields.all.includes(raw)) score += 120;
+      for (const group of groups) {
+        const groupScore = Math.max(...group.map(term => scoreTerm(fields, term)));
+        if (groupScore <= 0) return -1;
+        score += groupScore;
+      }
+      return score;
+    }
+
+    function repoMatchesSearch(repo) {
+      return repoSearchScore(repo) >= 0;
+    }
+
     function repoMatches(repo) {
       if (state.category !== '全部' && repo.primary_category !== state.category) return false;
-      if (!state.query) return true;
-      const blob = [
+      const score = repoSearchScore(repo);
+      repo.__score = score;
+      return score >= 0;
+    }
+
+    function legacySearchBlob(repo) {
+      return [
         repo.full_name,
         repo.description,
         repo.chinese_note,
@@ -465,13 +647,14 @@
         repo.language,
         ...(repo.topics || [])
       ].join(' ').toLowerCase();
-      return blob.includes(state.query);
     }
 
     function sortRepos(repos) {
       const sorted = [...repos];
       const byText = (repo) => repo.full_name.toLowerCase();
-      if (state.sort === 'recent') {
+      if (state.query) {
+        sorted.sort((a, b) => (b.__score || 0) - (a.__score || 0) || (b.stars || 0) - (a.stars || 0) || byText(a).localeCompare(byText(b)));
+      } else if (state.sort === 'recent') {
         sorted.sort((a, b) => (b.starred_at || '').localeCompare(a.starred_at || '') || byText(a).localeCompare(byText(b)));
       } else if (state.sort === 'updated') {
         sorted.sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || '') || byText(a).localeCompare(byText(b)));
@@ -484,14 +667,15 @@
     }
 
     function renderCategoryStrip() {
-      const counts = catalog.reduce((acc, repo) => {
+      const searchableCatalog = state.query ? catalog.filter(repoMatchesSearch) : catalog;
+      const counts = searchableCatalog.reduce((acc, repo) => {
         acc[repo.primary_category] = (acc[repo.primary_category] || 0) + 1;
         return acc;
       }, {});
       const labels = ['全部', ...categoryOrder];
       categoryStrip.innerHTML = labels.map(label => {
         const active = state.category === label ? ' active' : '';
-        const count = label === '全部' ? catalog.length : counts[label] || 0;
+        const count = label === '全部' ? searchableCatalog.length : counts[label] || 0;
         const colors = label === '全部' ? ['#171717', '#525252'] : categoryColors(label);
         return `<button class="category-pill${active}" style="--pill-a: ${colors[0]}; --pill-b: ${colors[1]};" data-category="${escapeAttr(label)}"><span class="category-label">${escapeHtml(label)}</span><span class="category-count">${count}</span></button>`;
       }).join('');
@@ -557,6 +741,13 @@
     function render() {
       const filtered = catalog.filter(repoMatches);
       emptyEl.style.display = filtered.length ? 'none' : 'block';
+      clearSearchEl.classList.toggle('visible', Boolean(state.query));
+      searchMetaEl.textContent = state.query
+        ? `找到 ${filtered.length} 个匹配项目${state.category === '全部' ? '' : ' · ' + state.category}`
+        : `当前显示 ${filtered.length} 个项目`;
+      quickSearchesEl.querySelectorAll('button').forEach(button => {
+        button.classList.toggle('active', normalizeText(button.dataset.query) === normalizeText(state.query));
+      });
       renderCategoryStrip();
       renderSections(filtered);
     }
@@ -575,7 +766,22 @@
     }
 
     searchEl.addEventListener('input', event => {
-      state.query = event.target.value.trim().toLowerCase();
+      state.query = event.target.value.trim();
+      render();
+    });
+
+    clearSearchEl.addEventListener('click', () => {
+      state.query = '';
+      searchEl.value = '';
+      searchEl.focus();
+      render();
+    });
+
+    quickSearchesEl.addEventListener('click', event => {
+      const button = event.target.closest('button[data-query]');
+      if (!button) return;
+      state.query = button.dataset.query;
+      searchEl.value = state.query;
       render();
     });
 
