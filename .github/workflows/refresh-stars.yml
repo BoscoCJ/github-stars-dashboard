@@ -7,7 +7,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: refresh-stars-dashboard
@@ -31,15 +33,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python refresh_stars.py
 
-      - name: Commit refreshed dashboard
+      - name: Prepare Pages artifact
         run: |
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "No dashboard changes to commit."
-            exit 0
-          fi
+          mkdir -p _site
+          cp index.html _site/index.html
+          cp .nojekyll _site/.nojekyll
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Refresh stars dashboard"
-          git push
+          python -c "import json, pathlib, shutil; root=pathlib.Path('.'); site=pathlib.Path('_site'); data=json.loads(pathlib.Path('.stars-pages.json').read_text(encoding='utf-8')); [shutil.copytree(root / slug, site / slug, dirs_exist_ok=True) for slug in data.get('slugs', [])]"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

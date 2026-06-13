@@ -8,3 +8,5 @@ stars_catalog.md
 stars_dashboard.html
 public/
 .generated/
+.stars-pages.json
+_site/
