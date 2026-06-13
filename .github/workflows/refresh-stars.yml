@@ -1,0 +1,45 @@
+name: Refresh GitHub Stars Dashboard
+
+on:
+  schedule:
+    # Runs every day at 01:20 UTC, which is 09:20 in China Standard Time.
+    - cron: "20 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-stars-dashboard
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refresh starred repositories
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python refresh_stars.py
+
+      - name: Commit refreshed dashboard
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No dashboard changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Refresh stars dashboard"
+          git push

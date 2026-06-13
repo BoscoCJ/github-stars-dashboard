@@ -1,0 +1,13 @@
+site_title: GitHub Stars Observatory
+
+# In GitHub Actions, "auto" resolves to the repository owner.
+# Locally, this fallback keeps the demo working before the repo is used as a template.
+local_fallback_user: BoscoCJ
+
+users:
+  - username: auto
+    label: 我的收藏
+
+  # Add more public GitHub users if you want extra pages.
+  # - username: torvalds
+  #   label: Linus Torvalds
