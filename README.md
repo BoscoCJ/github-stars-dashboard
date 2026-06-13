@@ -215,6 +215,18 @@ GitHub Actions
 
 然后确认 `Actions` 里的 workflow 已经成功运行。
 
+### Actions 里出现 Node.js warning 怎么办？
+
+如果 workflow 是绿色 `Success`，说明部署已经成功。Node.js warning 通常只是 GitHub Actions 运行环境升级提醒。
+
+本项目已经在 workflow 里设置：
+
+```yaml
+FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+```
+
+用于提前切换到 GitHub 推荐的 Node.js 24 运行方式。
+
 ### 可以看别人的收藏吗？
 
 可以。把对方 GitHub 用户名写进 `config.yml` 即可。
