@@ -11,3 +11,5 @@ users:
   # Add more public GitHub users if you want extra pages.
   # - username: torvalds
   #   label: Linus Torvalds
+  - username: nashsu
+    label: nashsu
