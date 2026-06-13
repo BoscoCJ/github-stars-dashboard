@@ -906,6 +906,11 @@ def write_html(catalog, output_path=CATALOG_HTML_PATH, owner_name="BoscoCJ", own
       color: #34312c;
       font-size: 14px;
       line-height: 1.72;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }}
 
     .tags {{
@@ -1214,6 +1219,7 @@ def write_html(catalog, output_path=CATALOG_HTML_PATH, owner_name="BoscoCJ", own
     function renderCard(repo) {{
       const topics = (repo.topics || []).slice(0, 4).map(topic => `<span class="tag">${{escapeHtml(topic)}}</span>`).join('');
       const homepage = repo.homepage ? `<span class="tag">homepage</span>` : '';
+      const note = repo.chinese_note || repo.description || '暂无说明';
       return `
         <a class="repo-card" href="${{escapeAttr(repo.html_url)}}" target="_blank" rel="noreferrer">
           <div class="repo-top">
@@ -1223,7 +1229,7 @@ def write_html(catalog, output_path=CATALOG_HTML_PATH, owner_name="BoscoCJ", own
               <span class="owner">${{escapeHtml(repo.owner_login || '')}} · ${{escapeHtml(repo.language || 'Unknown')}}</span>
             </span>
           </div>
-          <p class="note">${{escapeHtml(repo.chinese_note || repo.description || '暂无说明')}}</p>
+          <p class="note" title="${{escapeAttr(note)}}">${{escapeHtml(note)}}</p>
           <div class="tags">
             <span class="tag metric">${{formatNumber(repo.stars)}} stars</span>
             <span class="tag metric">updated ${{compactDate(repo.updated_at)}}</span>
