@@ -1,6 +1,14 @@
 name: Refresh GitHub Stars Dashboard
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - config.yml
+      - build_catalog.py
+      - refresh_stars.py
+      - .github/workflows/refresh-stars.yml
   schedule:
     # Runs every day at 01:20 UTC, which is 09:20 in China Standard Time.
     - cron: "20 1 * * *"
